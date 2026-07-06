@@ -57,7 +57,9 @@
       max-width:470px;
       min-height:100dvh;
       margin:0 auto;
-      padding:12px 11px calc(20px + env(safe-area-inset-bottom));
+      padding:12px 11px calc(18px + env(safe-area-inset-bottom));
+      display:flex;
+      flex-direction:column;
     }
 
     .topbar{
@@ -66,6 +68,7 @@
       justify-content:space-between;
       gap:10px;
       margin-bottom:12px;
+      flex:0 0 auto;
     }
 
     .brand{
@@ -90,7 +93,7 @@
 
     .brand h1{
       margin:0;
-      font-size:1.1rem;
+      font-size:1.15rem;
       font-weight:1000;
       letter-spacing:-.03em;
       white-space:nowrap;
@@ -148,6 +151,7 @@
 
     .screen{
       display:none;
+      flex:1 1 auto;
     }
 
     .screen.active{
@@ -261,7 +265,7 @@
     }
 
     .run-panel{
-      min-height:calc(100dvh - 78px);
+      min-height:calc(100dvh - 150px);
       display:flex;
       flex-direction:column;
       gap:11px;
@@ -452,6 +456,37 @@
       padding:20px 0;
     }
 
+    .designer-footer{
+      margin-top:13px;
+      padding:11px 14px;
+      border-radius:20px;
+      background:
+        linear-gradient(135deg, rgba(37,99,235,.10), rgba(255,255,255,.96)),
+        #fff;
+      border:1px solid var(--line);
+      box-shadow:0 12px 30px rgba(15,23,42,.06);
+      text-align:center;
+      flex:0 0 auto;
+    }
+
+    .designer-footer span{
+      display:block;
+      color:var(--muted);
+      font-size:.72rem;
+      font-weight:900;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+    }
+
+    .designer-footer strong{
+      display:block;
+      margin-top:2px;
+      color:var(--primary-dark);
+      font-size:.96rem;
+      font-weight:1000;
+      letter-spacing:-.02em;
+    }
+
     .modal-content{
       border-radius:25px;
       border:1px solid var(--line);
@@ -467,6 +502,22 @@
     .modal-title{
       font-weight:1000;
       letter-spacing:-.025em;
+    }
+
+    .session-header{
+      display:flex;
+      align-items:center;
+      gap:16px;
+    }
+
+    .session-header .modal-title{
+      margin-right:auto;
+    }
+
+    .session-sort-control{
+      margin-left:auto;
+      min-width:132px;
+      flex:0 0 auto;
     }
 
     .btn-ui{
@@ -662,6 +713,15 @@
       .panel{
         padding:13px;
       }
+
+      .session-sort-control{
+        min-width:120px;
+        font-size:.78rem;
+      }
+
+      .designer-footer{
+        padding:10px 12px;
+      }
     }
   </style>
 </head>
@@ -670,7 +730,7 @@
   <main class="app">
     <div class="topbar">
       <div class="brand">
-        <div class="logo">Y</div>
+        <div class="logo">S</div>
         <h1>Söz Hakkı</h1>
       </div>
 
@@ -767,14 +827,19 @@
         </div>
       </div>
     </section>
+
+    <footer class="designer-footer">
+      <span>Programın Tasarlayıcısı</span>
+      <strong>Ferhat Karagöz</strong>
+    </footer>
   </main>
 
   <div class="modal fade" id="sessionModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header session-header">
           <h5 class="modal-title">Oturum Listesi</h5>
-          <button type="button" class="btn btn-outline-primary btn-sm btn-ui" id="sessionSortBtn">Düşük → Yüksek</button>
+          <button type="button" class="btn btn-outline-primary btn-sm btn-ui session-sort-control" id="sessionSortBtn">Düşük → Yüksek</button>
         </div>
 
         <div class="modal-body">
@@ -1043,6 +1108,7 @@
       });
 
       el.studentCard.addEventListener("click", givePointAndNext);
+
       el.studentCard.addEventListener("keydown", e => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
@@ -1070,6 +1136,7 @@
       });
 
       el.openScoreListBtn.addEventListener("click", openScoreList);
+
       el.scoreClassSelect.addEventListener("change", () => {
         activeScoreClass = el.scoreClassSelect.value;
         renderScoreList();
@@ -1154,21 +1221,29 @@
       classNames.forEach(cls => {
         const count = students.filter(s => s.sinif === cls).length;
         const btn = document.createElement("button");
+
         btn.type = "button";
         btn.className = "choice-card";
         btn.innerHTML = `<strong>${escapeHTML(cls)}</strong><span>${count}</span>`;
+
         btn.addEventListener("click", () => {
           selectedClass = cls;
           selectedClassKey = pathKey(cls);
           el.selectedClassText.textContent = cls;
           showScreen("sort");
         });
+
         el.classGrid.appendChild(btn);
       });
     }
 
     function startRun(){
       sessionData = createSessionData();
+
+      getClassStudents().forEach(st => {
+        addSessionStudent(st);
+      });
+
       sessionSortAsc = true;
       round = 1;
       buildQueue(true);
@@ -1281,8 +1356,10 @@
       busy = true;
 
       const st = currentStudent;
+      const sKey = pathKey(st.no);
+
       addSessionStudent(st);
-      sessionData.given[pathKey(st.no)] = (sessionData.given[pathKey(st.no)] || 0) + 1;
+      sessionData.given[sKey] = (sessionData.given[sKey] || 0) + 1;
 
       const newScore = getScore(st) + 1;
       setLocalScore(st, newScore);
@@ -1358,6 +1435,7 @@
           name:st.name,
           sinif:st.sinif
         };
+
         sessionData.order.push(sKey);
       }
     }
@@ -1367,8 +1445,7 @@
         const st = sessionData.students[sKey];
         const given = Number(sessionData.given[sKey] || 0);
         const absent = Number(sessionData.absent[sKey] || 0);
-        const todayAbsent = getAbsentCount(st);
-        const lockedAbsent = todayAbsent >= 2;
+        const lockedAbsent = absent >= 2;
 
         return {
           key:sKey,
@@ -1446,9 +1523,8 @@
           score:getScore(s)
         }));
 
-      const scores = rows.map(r => r.score);
-      const min = scores.length ? Math.min(...scores) : 0;
-      const max = scores.length ? Math.max(...scores) : 0;
+      const total = rows.reduce((sum, r) => sum + r.score, 0);
+      const average = rows.length ? total / rows.length : 0;
 
       rows.sort((a,b) => {
         const diff = scoreSortAsc ? a.score - b.score : b.score - a.score;
@@ -1458,15 +1534,15 @@
 
       el.scoreSortBtn.textContent = scoreSortAsc ? "Düşük → Yüksek" : "Yüksek → Düşük";
 
-      const warningCount = rows.filter(r => getLowScoreLabel(r.score, min, max)).length;
+      const warningCount = rows.filter(r => getLowScoreLabel(r.score, average)).length;
 
       el.scoreWarningStrip.classList.toggle("show", warningCount > 0);
-      el.scoreWarningStrip.textContent = warningCount > 0 ? `Az söz hakkı: ${warningCount}` : "";
+      el.scoreWarningStrip.textContent = warningCount > 0 ? `Ortalama altı: ${warningCount}` : "";
 
       el.scoreListBody.innerHTML = rows.map(r => {
-        const warn = getLowScoreLabel(r.score, min, max);
+        const warn = getLowScoreLabel(r.score, average);
         const warnCell = warn
-          ? `<span class="badge rounded-pill ${warn === "Çok az" ? "badge-red" : "badge-orange"}">${warn}</span>`
+          ? `<span class="badge rounded-pill badge-red">${warn}</span>`
           : `<span class="text-secondary">—</span>`;
 
         return `
@@ -1480,11 +1556,9 @@
       }).join("");
     }
 
-    function getLowScoreLabel(score, min, max){
-      if (max <= min) return "";
-      if (score === min) return "Çok az";
-      if ((max - min) >= 3 && score <= min + 1) return "Az";
-      return "";
+    function getLowScoreLabel(score, average){
+      if (average <= 0) return "";
+      return score < average ? "Çok az" : "";
     }
 
     function openConfirm(title, text, action){
@@ -1549,12 +1623,12 @@
     async function flushSave(){
       clearTimeout(saveTimer);
 
-      const updates = { ...pendingUpdates };
-      updates["m/ls"] = Date.now();
-
       if (!Object.keys(pendingUpdates).length) {
         return;
       }
+
+      const updates = { ...pendingUpdates };
+      updates["m/ls"] = Date.now();
 
       await update(ref(db, DB_ROOT), updates);
 
@@ -1659,6 +1733,7 @@
 
         const tqx = encodeURIComponent(`out:json;responseHandler:${cb}`);
         script.src = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${encodeURIComponent(sheetName)}&tqx=${tqx}`;
+
         script.onerror = () => {
           cleanup();
           reject(new Error("Google Sheets bağlantı hatası."));
