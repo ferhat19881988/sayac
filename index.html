@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Yoklama / Söz Hakkı Sıralama</title>
+  <title>Söz Hakkı</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -11,29 +11,45 @@
     :root{
       --bg:#f6f8fb;
       --card:#ffffff;
-      --text:#132238;
-      --muted:#6b7280;
-      --line:#e7ecf3;
+      --text:#101828;
+      --muted:#667085;
+      --line:#e4eaf2;
       --primary:#2563eb;
-      --primary2:#1d4ed8;
+      --primary-dark:#1d4ed8;
       --soft:#eef4ff;
       --success:#16a34a;
       --danger:#dc2626;
+      --danger-soft:#fff1f2;
       --warning:#f59e0b;
-      --shadow:0 12px 35px rgba(15,23,42,.08);
+      --warning-soft:#fff7ed;
+      --shadow:0 16px 42px rgba(15,23,42,.09);
       --radius:22px;
     }
 
-    *{ -webkit-tap-highlight-color: transparent; }
+    *{
+      box-sizing:border-box;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    html,body{
+      width:100%;
+      min-height:100%;
+      overflow-x:hidden;
+    }
 
     body{
       margin:0;
       min-height:100dvh;
       background:
-        radial-gradient(circle at top left, rgba(37,99,235,.10), transparent 34%),
+        radial-gradient(circle at top left, rgba(37,99,235,.13), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(22,163,74,.08), transparent 34%),
         linear-gradient(180deg, #fbfdff 0%, var(--bg) 100%);
       color:var(--text);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+
+    button,input,select{
+      font:inherit;
     }
 
     .app{
@@ -41,7 +57,7 @@
       max-width:470px;
       min-height:100dvh;
       margin:0 auto;
-      padding:14px 12px 24px;
+      padding:12px 11px calc(20px + env(safe-area-inset-bottom));
     }
 
     .topbar{
@@ -49,7 +65,7 @@
       align-items:center;
       justify-content:space-between;
       gap:10px;
-      margin-bottom:14px;
+      margin-bottom:12px;
     }
 
     .brand{
@@ -63,86 +79,111 @@
       width:42px;
       height:42px;
       border-radius:16px;
-      background:linear-gradient(145deg, #2563eb, #60a5fa);
+      background:linear-gradient(145deg,#2563eb,#60a5fa);
       color:white;
       display:grid;
       place-items:center;
-      font-weight:900;
-      box-shadow:0 8px 20px rgba(37,99,235,.25);
+      font-weight:1000;
+      box-shadow:0 10px 22px rgba(37,99,235,.27);
       flex:0 0 auto;
     }
 
     .brand h1{
-      font-size:1.08rem;
       margin:0;
-      font-weight:900;
-      letter-spacing:-.02em;
+      font-size:1.1rem;
+      font-weight:1000;
+      letter-spacing:-.03em;
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
     }
 
-    .brand small{
+    .sync-pill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:58px;
+      height:26px;
+      padding:0 10px;
+      border-radius:999px;
+      background:#fff;
+      border:1px solid var(--line);
       color:var(--muted);
-      display:block;
-      margin-top:1px;
-      font-size:.78rem;
+      font-size:.72rem;
+      font-weight:800;
+      box-shadow:0 8px 18px rgba(15,23,42,.05);
     }
 
     .icon-btn{
       width:42px;
       height:42px;
       border:1px solid var(--line);
-      background:white;
+      background:#fff;
       border-radius:15px;
       display:grid;
       place-items:center;
       color:var(--text);
-      box-shadow:0 7px 18px rgba(15,23,42,.06);
-      transition:.15s ease;
+      box-shadow:0 9px 20px rgba(15,23,42,.06);
+      transition:.14s ease;
       user-select:none;
     }
 
-    .icon-btn:hover{ background:#f8fafc; transform:translateY(-1px); }
-    .icon-btn:active{ transform:scale(.96); }
+    .icon-btn:hover{
+      background:#f8fafc;
+      transform:translateY(-1px);
+    }
+
+    .icon-btn:active{
+      transform:scale(.96);
+    }
 
     .panel{
-      background:rgba(255,255,255,.92);
+      background:rgba(255,255,255,.94);
       border:1px solid var(--line);
       border-radius:var(--radius);
       box-shadow:var(--shadow);
-      padding:16px;
-      backdrop-filter: blur(12px);
+      padding:15px;
+      backdrop-filter:blur(12px);
+    }
+
+    .screen{
+      display:none;
+    }
+
+    .screen.active{
+      display:block;
+    }
+
+    .title-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:12px;
     }
 
     .step-title{
-      font-size:1rem;
-      font-weight:900;
-      margin:0 0 5px;
-      letter-spacing:-.01em;
-    }
-
-    .step-sub{
-      color:var(--muted);
-      font-size:.86rem;
-      margin:0 0 14px;
+      margin:0;
+      font-size:1.02rem;
+      font-weight:1000;
+      letter-spacing:-.02em;
     }
 
     .class-grid{
       display:grid;
-      grid-template-columns:repeat(2, minmax(0,1fr));
+      grid-template-columns:repeat(2,minmax(0,1fr));
       gap:10px;
     }
 
     .choice-card{
       width:100%;
+      min-height:74px;
       border:1px solid var(--line);
       border-radius:18px;
       background:#fff;
-      padding:14px 10px;
+      padding:14px 11px;
       text-align:left;
-      transition:.16s ease;
-      min-height:72px;
+      transition:.15s ease;
       user-select:none;
     }
 
@@ -150,23 +191,26 @@
       border-color:#bfd3ff;
       background:#f8fbff;
       transform:translateY(-1px);
-      box-shadow:0 8px 18px rgba(37,99,235,.08);
+      box-shadow:0 9px 20px rgba(37,99,235,.08);
     }
 
-    .choice-card:active{ transform:scale(.975); }
+    .choice-card:active{
+      transform:scale(.975);
+    }
 
     .choice-card strong{
       display:block;
-      font-size:1.12rem;
-      font-weight:900;
-      line-height:1.1;
+      font-size:1.14rem;
+      font-weight:1000;
+      line-height:1;
     }
 
     .choice-card span{
       display:block;
       color:var(--muted);
-      font-size:.78rem;
-      margin-top:5px;
+      font-size:.76rem;
+      font-weight:800;
+      margin-top:7px;
     }
 
     .sort-list{
@@ -178,13 +222,13 @@
       width:100%;
       border:1px solid var(--line);
       border-radius:17px;
-      background:white;
+      background:#fff;
       padding:13px 14px;
       display:flex;
       align-items:center;
       gap:12px;
       text-align:left;
-      transition:.16s ease;
+      transition:.15s ease;
       user-select:none;
     }
 
@@ -194,7 +238,9 @@
       transform:translateY(-1px);
     }
 
-    .sort-btn:active{ transform:scale(.975); }
+    .sort-btn:active{
+      transform:scale(.975);
+    }
 
     .sort-num{
       width:34px;
@@ -204,25 +250,21 @@
       color:var(--primary);
       display:grid;
       place-items:center;
-      font-weight:900;
+      font-weight:1000;
       flex:0 0 auto;
     }
 
     .sort-btn strong{
-      font-size:.95rem;
+      font-size:.96rem;
+      font-weight:950;
       display:block;
     }
 
-    .sort-btn small{
-      color:var(--muted);
-      font-size:.76rem;
-    }
-
     .run-panel{
-      min-height:calc(100dvh - 98px);
+      min-height:calc(100dvh - 78px);
       display:flex;
       flex-direction:column;
-      gap:12px;
+      gap:11px;
     }
 
     .status-row{
@@ -232,29 +274,37 @@
     }
 
     .stat{
-      background:white;
+      background:#fff;
       border:1px solid var(--line);
       border-radius:17px;
-      padding:10px 8px;
+      padding:10px 7px;
       text-align:center;
-      box-shadow:0 8px 18px rgba(15,23,42,.04);
+      box-shadow:0 8px 18px rgba(15,23,42,.045);
+      min-width:0;
     }
 
     .stat b{
       display:block;
-      font-size:1.05rem;
-      line-height:1.1;
+      font-size:1.03rem;
+      line-height:1.05;
+      font-weight:1000;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
     }
 
     .stat span{
-      font-size:.72rem;
+      display:block;
+      margin-top:4px;
+      font-size:.7rem;
       color:var(--muted);
+      font-weight:850;
     }
 
     .student-card{
       flex:1;
-      min-height:315px;
-      background:linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+      min-height:330px;
+      background:linear-gradient(180deg,#fff 0%,#f9fbff 100%);
       border:1px solid var(--line);
       border-radius:28px;
       box-shadow:var(--shadow);
@@ -262,18 +312,18 @@
       flex-direction:column;
       align-items:center;
       justify-content:center;
-      padding:18px 14px;
+      padding:18px 13px;
       text-align:center;
       position:relative;
       overflow:hidden;
       cursor:pointer;
       user-select:none;
-      transition:.14s ease;
+      transition:.13s ease;
     }
 
     .student-card:active{
       transform:scale(.985);
-      box-shadow:0 8px 24px rgba(15,23,42,.09);
+      box-shadow:0 10px 24px rgba(15,23,42,.09);
     }
 
     .student-card::before{
@@ -307,27 +357,52 @@
       border-radius:999px;
       padding:6px 12px;
       font-size:.82rem;
-      font-weight:900;
-      margin-bottom:14px;
+      font-weight:1000;
+      margin-bottom:12px;
     }
 
     .student-name{
       position:relative;
       z-index:2;
+      width:100%;
       font-weight:1000;
-      letter-spacing:-.045em;
-      line-height:1.03;
-      font-size:clamp(2.35rem, 11vw, 4.35rem);
-      max-width:100%;
+      letter-spacing:-.052em;
+      line-height:1.02;
+      font-size:clamp(2.45rem,11.2vw,4.45rem);
       overflow-wrap:anywhere;
     }
 
-    .student-hint{
+    .student-meta{
       position:relative;
       z-index:2;
-      color:var(--muted);
-      font-size:.82rem;
-      margin-top:16px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-wrap:wrap;
+      gap:7px;
+      margin-top:15px;
+    }
+
+    .meta-badge{
+      border-radius:999px;
+      padding:7px 11px;
+      font-size:.78rem;
+      font-weight:1000;
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--text);
+    }
+
+    .meta-badge.primary{
+      background:var(--soft);
+      color:var(--primary);
+      border-color:#dbe8ff;
+    }
+
+    .meta-badge.warn{
+      background:var(--warning-soft);
+      color:#9a3412;
+      border-color:#fed7aa;
     }
 
     .action-row{
@@ -339,20 +414,25 @@
     .main-btn{
       border:0;
       border-radius:19px;
-      min-height:58px;
-      font-weight:900;
-      font-size:1rem;
-      transition:.15s ease;
-      box-shadow:0 8px 18px rgba(15,23,42,.07);
+      min-height:59px;
+      font-weight:1000;
+      font-size:1.02rem;
+      transition:.14s ease;
+      box-shadow:0 9px 20px rgba(15,23,42,.075);
       user-select:none;
     }
 
-    .main-btn:hover{ transform:translateY(-1px); filter:brightness(.99); }
-    .main-btn:active{ transform:scale(.975); }
+    .main-btn:hover{
+      transform:translateY(-1px);
+    }
+
+    .main-btn:active{
+      transform:scale(.975);
+    }
 
     .btn-finish{
-      color:white;
-      background:linear-gradient(145deg, var(--primary), var(--primary2));
+      color:#fff;
+      background:linear-gradient(145deg,var(--primary),var(--primary-dark));
     }
 
     .btn-absent{
@@ -361,52 +441,79 @@
       border:1px solid #fed7aa;
     }
 
-    .btn-absent:hover{ background:#ffedd5; }
-
-    .mini-note{
-      font-size:.78rem;
-      color:var(--muted);
-      text-align:center;
-      margin:0;
-    }
-
-    .screen{ display:none; }
-    .screen.active{ display:block; }
-
     .loading{
       display:flex;
       align-items:center;
+      justify-content:center;
       gap:10px;
       color:var(--muted);
       font-size:.9rem;
+      font-weight:850;
+      padding:20px 0;
     }
 
     .modal-content{
-      border-radius:24px;
+      border-radius:25px;
       border:1px solid var(--line);
       overflow:hidden;
+      box-shadow:0 24px 70px rgba(15,23,42,.22);
+    }
+
+    .modal-header,
+    .modal-footer{
+      border-color:var(--line);
+    }
+
+    .modal-title{
+      font-weight:1000;
+      letter-spacing:-.025em;
+    }
+
+    .btn-ui{
+      border-radius:16px;
+      font-weight:950;
+      min-height:43px;
     }
 
     .score-table{
       font-size:.88rem;
+      margin:0;
     }
 
     .score-table th{
       color:var(--muted);
-      font-size:.74rem;
+      font-size:.72rem;
       text-transform:uppercase;
-      letter-spacing:.04em;
+      letter-spacing:.045em;
+      font-weight:1000;
+      white-space:nowrap;
     }
 
     .score-table td{
       vertical-align:middle;
-      font-weight:700;
+      font-weight:850;
     }
 
-    .badge-soft{
+    .table-name{
+      min-width:145px;
+    }
+
+    .badge-score{
       background:var(--soft);
       color:var(--primary);
       border:1px solid #dbe8ff;
+    }
+
+    .badge-red{
+      background:#fee2e2;
+      color:#b91c1c;
+      border:1px solid #fecaca;
+    }
+
+    .badge-orange{
+      background:#ffedd5;
+      color:#9a3412;
+      border:1px solid #fed7aa;
     }
 
     .settings-btn{
@@ -414,10 +521,10 @@
       border-radius:17px;
       padding:13px 14px;
       border:1px solid var(--line);
-      background:white;
-      font-weight:800;
+      background:#fff;
+      font-weight:950;
       text-align:left;
-      transition:.15s ease;
+      transition:.14s ease;
     }
 
     .settings-btn:hover{
@@ -425,21 +532,135 @@
       transform:translateY(-1px);
     }
 
-    .settings-btn:active{ transform:scale(.98); }
+    .settings-btn:active{
+      transform:scale(.98);
+    }
 
     .danger-zone{
-      border:1px solid #fecaca;
+      border-color:#fecaca;
       background:#fff7f7;
+      color:#991b1b;
+    }
+
+    .alert-pro{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      border-radius:18px;
+      padding:13px 14px;
+      border:1px solid var(--line);
+      background:#fff;
+      box-shadow:0 14px 36px rgba(15,23,42,.12);
+      min-width:min(360px,calc(100vw - 24px));
+    }
+
+    .alert-pro-icon{
+      width:36px;
+      height:36px;
+      border-radius:14px;
+      display:grid;
+      place-items:center;
+      flex:0 0 auto;
+      font-size:1.1rem;
+      font-weight:1000;
+    }
+
+    .alert-pro.success .alert-pro-icon{
+      background:#dcfce7;
+      color:#15803d;
+    }
+
+    .alert-pro.danger .alert-pro-icon{
+      background:#fee2e2;
+      color:#b91c1c;
+    }
+
+    .alert-pro.warning .alert-pro-icon{
+      background:#ffedd5;
+      color:#9a3412;
+    }
+
+    .alert-pro.info .alert-pro-icon{
+      background:var(--soft);
+      color:var(--primary);
+    }
+
+    .alert-pro-title{
+      margin:0;
+      font-size:.92rem;
+      font-weight:1000;
+      line-height:1.18;
+    }
+
+    .alert-pro-text{
+      margin:3px 0 0;
+      color:var(--muted);
+      font-size:.8rem;
+      font-weight:750;
+    }
+
+    .warning-strip{
+      border:1px solid #fed7aa;
+      background:#fff7ed;
+      color:#9a3412;
+      border-radius:17px;
+      padding:10px 12px;
+      font-size:.84rem;
+      font-weight:1000;
+      margin-bottom:10px;
+      display:none;
+    }
+
+    .warning-strip.show{
+      display:block;
+    }
+
+    .confirm-box{
+      border-radius:20px;
+      border:1px solid #fecaca;
+      background:linear-gradient(180deg,#fff7f7,#fff);
+      padding:14px;
+    }
+
+    .confirm-word{
+      font-weight:1000;
+      color:#b91c1c;
+      letter-spacing:.08em;
     }
 
     @media (min-width:768px){
       .app{
         max-width:520px;
-        padding-top:24px;
+        padding-top:22px;
       }
 
       .student-card{
         min-height:390px;
+      }
+    }
+
+    @media (max-width:390px){
+      .app{
+        padding-left:9px;
+        padding-right:9px;
+      }
+
+      .student-card{
+        min-height:305px;
+        border-radius:25px;
+      }
+
+      .student-name{
+        font-size:clamp(2.15rem,10.8vw,3.8rem);
+      }
+
+      .main-btn{
+        min-height:56px;
+        font-size:.98rem;
+      }
+
+      .panel{
+        padding:13px;
       }
     }
   </style>
@@ -450,72 +671,68 @@
     <div class="topbar">
       <div class="brand">
         <div class="logo">Y</div>
-        <div>
-          <h1>Yoklama / Söz Sırası</h1>
-          <small id="syncText">Hazırlanıyor...</small>
-        </div>
+        <h1>Söz Hakkı</h1>
       </div>
 
-      <button class="icon-btn" type="button" data-bs-toggle="modal" data-bs-target="#settingsModal" aria-label="Ayarlar">
-        ⚙️
-      </button>
+      <div class="d-flex align-items-center gap-2">
+        <span class="sync-pill" id="syncText">...</span>
+        <button class="icon-btn" type="button" data-bs-toggle="modal" data-bs-target="#settingsModal" aria-label="Ayarlar">⚙️</button>
+      </div>
     </div>
 
     <section id="screenClass" class="screen active">
       <div class="panel">
-        <h2 class="step-title">1. Sınıf seç</h2>
-        <p class="step-sub">Google Sheets dosyasındaki sınıf grupları otomatik okunur.</p>
+        <div class="title-row">
+          <h2 class="step-title">Sınıf</h2>
+        </div>
 
         <div id="loadingBox" class="loading">
           <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-          <span>Öğrenci listesi yükleniyor...</span>
+          <span>Yükleniyor</span>
         </div>
 
         <div id="classGrid" class="class-grid d-none"></div>
 
-        <div id="loadError" class="alert alert-danger mt-3 d-none"></div>
+        <div id="loadError" class="alert alert-danger mt-3 d-none fw-bold"></div>
       </div>
     </section>
 
     <section id="screenSort" class="screen">
       <div class="panel">
-        <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
-          <div>
-            <h2 class="step-title mb-0">2. Sıralama seç</h2>
-            <p class="step-sub mb-0"><b id="selectedClassText"></b> sınıfı için seçim yap.</p>
-          </div>
+        <div class="title-row">
+          <h2 class="step-title" id="selectedClassText">Sıralama</h2>
           <button class="icon-btn" type="button" id="backToClassBtn">←</button>
         </div>
 
-        <div class="sort-list mt-3">
+        <div class="sort-list">
           <button class="sort-btn" type="button" data-mode="random">
             <span class="sort-num">1</span>
-            <span><strong>Rastgele</strong><small>Her turda karışık sıra</small></span>
+            <strong>Rastgele</strong>
           </button>
 
           <button class="sort-btn" type="button" data-mode="nameAsc">
             <span class="sort-num">2</span>
-            <span><strong>Ada göre A-Z</strong><small>Türkçe karakter uyumlu sıralama</small></span>
+            <strong>Ada göre A-Z</strong>
           </button>
 
           <button class="sort-btn" type="button" data-mode="nameDesc">
             <span class="sort-num">3</span>
-            <span><strong>Ada göre Z-A</strong><small>Tersten alfabetik sıra</small></span>
+            <strong>Ada göre Z-A</strong>
           </button>
 
           <button class="sort-btn" type="button" data-mode="noAsc">
             <span class="sort-num">4</span>
-            <span><strong>Numaraya göre çoğalan</strong><small>Küçük numaradan büyüğe</small></span>
+            <strong>Numaraya göre çoğalan</strong>
           </button>
 
           <button class="sort-btn" type="button" data-mode="noDesc">
             <span class="sort-num">5</span>
-            <span><strong>Numaraya göre azalan</strong><small>Büyük numaradan küçüğe</small></span>
+            <strong>Numaraya göre azalan</strong>
           </button>
 
           <button class="sort-btn" type="button" data-mode="scoreAsc">
             <span class="sort-num">6</span>
-            <span><strong>Puanlaması düşükten yükseğe</strong><small>Az söz alan önce gelir</small></span>
+            <strong>Puanlaması düşükten yükseğe</strong>
           </button>
         </div>
       </div>
@@ -541,27 +758,23 @@
         <div class="student-card" id="studentCard" role="button" tabindex="0">
           <div class="student-no" id="studentNo">NO</div>
           <div class="student-name" id="studentName">Hazır</div>
-          <div class="student-hint" id="studentHint">İsme dokununca sayaç artar ve sıradaki öğrenci gelir.</div>
+          <div class="student-meta" id="studentMeta"></div>
         </div>
 
         <div class="action-row">
           <button class="main-btn btn-finish" type="button" id="finishBtn">Bitir</button>
           <button class="main-btn btn-absent" type="button" id="absentBtn">Gelmedi</button>
         </div>
-
-        <p class="mini-note">Gelmedi 2 kez işaretlenen öğrenci sadece bugün tekrar gösterilmez.</p>
       </div>
     </section>
   </main>
 
-  <div class="modal fade" id="scoresModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal fade" id="sessionModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">
         <div class="modal-header">
-          <div>
-            <h5 class="modal-title fw-black mb-0">Sınıf Puanları</h5>
-            <small class="text-secondary" id="scoresModalSub"></small>
-          </div>
+          <h5 class="modal-title">Oturum Listesi</h5>
+          <button type="button" class="btn btn-outline-primary btn-sm btn-ui" id="sessionSortBtn">Düşük → Yüksek</button>
         </div>
 
         <div class="modal-body">
@@ -570,19 +783,19 @@
               <thead>
                 <tr>
                   <th>No</th>
-                  <th>Öğrenci</th>
+                  <th class="table-name">Öğrenci</th>
                   <th class="text-center">Puan</th>
-                  <th class="text-center">Bugün Gelmedi</th>
+                  <th class="text-center">Durum</th>
                 </tr>
               </thead>
-              <tbody id="scoresBody"></tbody>
+              <tbody id="sessionBody"></tbody>
             </table>
           </div>
         </div>
 
         <div class="modal-footer">
-          <button type="button" class="btn btn-primary rounded-4 fw-bold px-4" id="returnClassBtn" data-bs-dismiss="modal">
-            Sınıf seçimine dön
+          <button type="button" class="btn btn-primary btn-ui px-4" id="returnClassBtn" data-bs-dismiss="modal">
+            Sınıf
           </button>
         </div>
       </div>
@@ -593,39 +806,108 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <div>
-            <h5 class="modal-title fw-black mb-0">Ayarlar</h5>
-            <small class="text-secondary">Firebase kayıt işlemleri</small>
-          </div>
+          <h5 class="modal-title">Ayarlar</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
         </div>
 
         <div class="modal-body">
           <div class="d-grid gap-2">
-            <button class="settings-btn" type="button" id="reloadBtn">
-              🔄 Öğrenci listesini ve puanları yeniden yükle
-            </button>
-
-            <button class="settings-btn danger-zone" type="button" id="resetScoresBtn">
-              🧹 Puanlamaları sıfırla
-            </button>
-
-            <button class="settings-btn danger-zone" type="button" id="deleteDbBtn">
-              🗑️ sayacyolu veriyolunu sil
-            </button>
-          </div>
-
-          <div class="alert alert-light border mt-3 mb-0 small">
-            Kayıt yolu: <b>sayacyolu</b>
+            <button class="settings-btn" type="button" id="reloadBtn">🔄 Yenile</button>
+            <button class="settings-btn" type="button" id="openScoreListBtn">📊 Sınıf puan listesi</button>
+            <button class="settings-btn danger-zone" type="button" id="resetScoresBtn">🧹 Puanlamaları sıfırla</button>
+            <button class="settings-btn danger-zone" type="button" id="deleteDbBtn">🗑️ sayacyolu sil</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="toast-container position-fixed bottom-0 start-50 translate-middle-x p-3">
-    <div id="appToast" class="toast border-0 shadow" role="alert" aria-live="assertive" aria-atomic="true">
-      <div class="toast-body fw-bold" id="toastText"></div>
+  <div class="modal fade" id="scoreListModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Sınıf Puanları</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="d-flex gap-2 mb-2">
+            <select id="scoreClassSelect" class="form-select rounded-4 fw-bold"></select>
+            <button type="button" class="btn btn-outline-primary btn-ui flex-shrink-0" id="scoreSortBtn">Düşük → Yüksek</button>
+          </div>
+
+          <div class="warning-strip" id="scoreWarningStrip"></div>
+
+          <div class="table-responsive">
+            <table class="table table-sm score-table align-middle">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th class="table-name">Öğrenci</th>
+                  <th class="text-center">Toplam</th>
+                  <th class="text-center">Uyarı</th>
+                </tr>
+              </thead>
+              <tbody id="scoreListBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="confirmTitle">Onay</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="confirm-box fw-bold" id="confirmText"></div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light btn-ui" data-bs-dismiss="modal">İptal</button>
+          <button type="button" class="btn btn-danger btn-ui" id="confirmOkBtn">Onayla</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="deletePathModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">sayacyolu sil</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="confirm-box mb-3">
+            <span class="confirm-word">EVET</span>
+          </div>
+          <input id="deleteConfirmInput" class="form-control form-control-lg rounded-4 fw-bold text-center" autocomplete="off" placeholder="EVET">
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light btn-ui" data-bs-dismiss="modal">İptal</button>
+          <button type="button" class="btn btn-danger btn-ui" id="deleteConfirmBtn" disabled>Sil</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3">
+    <div id="appToast" class="toast border-0 bg-transparent shadow-none" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="alert-pro info" id="toastBox">
+        <div class="alert-pro-icon" id="toastIcon">i</div>
+        <div>
+          <p class="alert-pro-title" id="toastTitle">Bilgi</p>
+          <p class="alert-pro-text" id="toastText"></p>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -633,7 +915,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getDatabase, ref, get, set, update, remove } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+    import { getDatabase, ref, get, update, remove } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
     import { getAnalytics, isSupported } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js";
 
     const firebaseConfig = {
@@ -653,9 +935,13 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    isSupported().then(ok => { if (ok) getAnalytics(app); }).catch(() => {});
+
+    isSupported().then(ok => {
+      if (ok) getAnalytics(app);
+    }).catch(() => {});
 
     const collator = new Intl.Collator("tr", { sensitivity:"base", numeric:true });
+    const todayKey = getTodayKey();
 
     const el = {
       syncText: document.getElementById("syncText"),
@@ -677,35 +963,54 @@
       studentCard: document.getElementById("studentCard"),
       studentNo: document.getElementById("studentNo"),
       studentName: document.getElementById("studentName"),
-      studentHint: document.getElementById("studentHint"),
+      studentMeta: document.getElementById("studentMeta"),
 
       finishBtn: document.getElementById("finishBtn"),
       absentBtn: document.getElementById("absentBtn"),
 
-      scoresBody: document.getElementById("scoresBody"),
-      scoresModalSub: document.getElementById("scoresModalSub"),
+      sessionBody: document.getElementById("sessionBody"),
+      sessionSortBtn: document.getElementById("sessionSortBtn"),
       returnClassBtn: document.getElementById("returnClassBtn"),
 
       reloadBtn: document.getElementById("reloadBtn"),
+      openScoreListBtn: document.getElementById("openScoreListBtn"),
       resetScoresBtn: document.getElementById("resetScoresBtn"),
       deleteDbBtn: document.getElementById("deleteDbBtn"),
 
+      scoreClassSelect: document.getElementById("scoreClassSelect"),
+      scoreSortBtn: document.getElementById("scoreSortBtn"),
+      scoreWarningStrip: document.getElementById("scoreWarningStrip"),
+      scoreListBody: document.getElementById("scoreListBody"),
+
+      confirmTitle: document.getElementById("confirmTitle"),
+      confirmText: document.getElementById("confirmText"),
+      confirmOkBtn: document.getElementById("confirmOkBtn"),
+
+      deleteConfirmInput: document.getElementById("deleteConfirmInput"),
+      deleteConfirmBtn: document.getElementById("deleteConfirmBtn"),
+
       toast: document.getElementById("appToast"),
+      toastBox: document.getElementById("toastBox"),
+      toastIcon: document.getElementById("toastIcon"),
+      toastTitle: document.getElementById("toastTitle"),
       toastText: document.getElementById("toastText")
     };
 
-    const scoresModal = new bootstrap.Modal(document.getElementById("scoresModal"));
-    const settingsModalElement = document.getElementById("settingsModal");
-    const settingsModal = bootstrap.Modal.getOrCreateInstance(settingsModalElement);
-    const toast = new bootstrap.Toast(el.toast, { delay:1700 });
+    const sessionModal = new bootstrap.Modal(document.getElementById("sessionModal"));
+    const settingsModal = bootstrap.Modal.getOrCreateInstance(document.getElementById("settingsModal"));
+    const scoreListModal = new bootstrap.Modal(document.getElementById("scoreListModal"));
+    const confirmModal = new bootstrap.Modal(document.getElementById("confirmModal"));
+    const deletePathModal = new bootstrap.Modal(document.getElementById("deletePathModal"));
+    const toast = new bootstrap.Toast(el.toast, { delay:1900 });
 
     let students = [];
     let classNames = [];
     let dbData = { c:{}, g:{} };
+    let pendingUpdates = {};
 
     let selectedClass = "";
-    let selectedMode = "";
     let selectedClassKey = "";
+    let selectedMode = "";
 
     let queue = [];
     let currentStudent = null;
@@ -713,7 +1018,12 @@
     let busy = false;
     let saveTimer = null;
 
-    const todayKey = getTodayKey();
+    let sessionSortAsc = true;
+    let scoreSortAsc = true;
+    let activeScoreClass = "";
+    let confirmAction = null;
+
+    let sessionData = createSessionData();
 
     init();
 
@@ -744,49 +1054,82 @@
       el.finishBtn.addEventListener("click", finishRun);
 
       el.returnClassBtn.addEventListener("click", () => {
-        selectedClass = "";
-        selectedMode = "";
-        selectedClassKey = "";
-        queue = [];
-        currentStudent = null;
-        round = 1;
+        endRun();
         showScreen("class");
+      });
+
+      el.sessionSortBtn.addEventListener("click", () => {
+        sessionSortAsc = !sessionSortAsc;
+        renderSessionModal();
       });
 
       el.reloadBtn.addEventListener("click", async () => {
         settingsModal.hide();
         await reloadAll();
-        showToast("Yeniden yüklendi.");
+        showAlert("success", "Yenilendi", "Kayıtlar güncel.");
       });
 
-      el.resetScoresBtn.addEventListener("click", resetScores);
-      el.deleteDbBtn.addEventListener("click", deleteDatabasePath);
+      el.openScoreListBtn.addEventListener("click", openScoreList);
+      el.scoreClassSelect.addEventListener("change", () => {
+        activeScoreClass = el.scoreClassSelect.value;
+        renderScoreList();
+      });
+
+      el.scoreSortBtn.addEventListener("click", () => {
+        scoreSortAsc = !scoreSortAsc;
+        renderScoreList();
+      });
+
+      el.resetScoresBtn.addEventListener("click", () => {
+        openConfirm("Puanlamaları sıfırla", "Tüm sınıf puanlamaları sıfırlanacak.", resetScores);
+      });
+
+      el.deleteDbBtn.addEventListener("click", () => {
+        settingsModal.hide();
+        el.deleteConfirmInput.value = "";
+        el.deleteConfirmBtn.disabled = true;
+        deletePathModal.show();
+        setTimeout(() => el.deleteConfirmInput.focus(), 260);
+      });
+
+      el.confirmOkBtn.addEventListener("click", async () => {
+        if (typeof confirmAction !== "function") return;
+        const fn = confirmAction;
+        confirmAction = null;
+        confirmModal.hide();
+        await fn();
+      });
+
+      el.deleteConfirmInput.addEventListener("input", () => {
+        el.deleteConfirmBtn.disabled = el.deleteConfirmInput.value.trim() !== "EVET";
+      });
+
+      el.deleteConfirmBtn.addEventListener("click", deleteDatabasePath);
     }
 
     async function reloadAll(){
       try{
         setLoading(true);
         el.loadError.classList.add("d-none");
-        el.loadError.textContent = "";
+        el.syncText.textContent = "...";
 
-        el.syncText.textContent = "Liste okunuyor...";
         students = await loadStudentsFromSheet();
 
         if (!students.length) {
-          throw new Error("Öğrenci listesi boş geldi. Sheet adı Ogrenciler, başlıklar NO / ADSOYAD / SINIF olmalı.");
+          throw new Error("Öğrenci listesi boş.");
         }
 
-        el.syncText.textContent = "Puanlar okunuyor...";
         await loadFirebaseData();
 
         renderClassButtons();
         setLoading(false);
-        el.syncText.textContent = `${students.length} öğrenci hazır`;
+        el.syncText.textContent = "Hazır";
       }catch(err){
         setLoading(false);
         el.loadError.classList.remove("d-none");
-        el.loadError.textContent = err.message || "Liste yüklenemedi.";
-        el.syncText.textContent = "Yükleme hatası";
+        el.loadError.textContent = err.message || "Yükleme hatası.";
+        el.syncText.textContent = "Hata";
+        showAlert("danger", "Hata", el.loadError.textContent);
       }
     }
 
@@ -813,7 +1156,7 @@
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "choice-card";
-        btn.innerHTML = `<strong>${escapeHTML(cls)}</strong><span>${count} öğrenci</span>`;
+        btn.innerHTML = `<strong>${escapeHTML(cls)}</strong><span>${count}</span>`;
         btn.addEventListener("click", () => {
           selectedClass = cls;
           selectedClassKey = pathKey(cls);
@@ -825,17 +1168,28 @@
     }
 
     function startRun(){
+      sessionData = createSessionData();
+      sessionSortAsc = true;
       round = 1;
       buildQueue(true);
       showScreen("run");
       showNextStudent();
     }
 
-    function buildQueue(firstStart = false){
-      const classStudents = getClassStudents()
-        .filter(s => getAbsentCount(s) < 2);
+    function endRun(){
+      selectedClass = "";
+      selectedClassKey = "";
+      selectedMode = "";
+      queue = [];
+      currentStudent = null;
+      round = 1;
+      busy = false;
+      sessionData = createSessionData();
+    }
 
-      let list = [...classStudents];
+    function buildQueue(firstStart = false){
+      let list = getClassStudents()
+        .filter(s => getAbsentCount(s) < 2);
 
       if (selectedMode === "random") {
         list = shuffle(list);
@@ -869,7 +1223,7 @@
 
       if (!firstStart) {
         round++;
-        showToast(`${round}. tur başladı.`);
+        showAlert("info", "Tur", `${round}. tur`);
       }
     }
 
@@ -884,8 +1238,8 @@
         currentStudent = null;
         updateRunHeader();
         el.studentNo.textContent = "-";
-        el.studentName.textContent = "Bugün gösterilecek öğrenci kalmadı";
-        el.studentHint.textContent = "Gelmedi sınırı nedeniyle liste boş.";
+        el.studentName.textContent = "Bitti";
+        el.studentMeta.innerHTML = "";
         return;
       }
 
@@ -898,13 +1252,21 @@
 
       if (!currentStudent) return;
 
-      el.studentNo.textContent = `NO ${currentStudent.no}`;
-      el.studentName.textContent = currentStudent.name;
-
       const score = getScore(currentStudent);
       const absent = getAbsentCount(currentStudent);
 
-      el.studentHint.textContent = `Puan: ${score} • Bugünkü gelmedi: ${absent}/2`;
+      el.studentNo.textContent = `NO ${currentStudent.no}`;
+      el.studentName.textContent = currentStudent.name;
+
+      const badges = [
+        `<span class="meta-badge primary">Puan ${score}</span>`
+      ];
+
+      if (absent === 1) {
+        badges.push(`<span class="meta-badge warn">Gelmedi</span>`);
+      }
+
+      el.studentMeta.innerHTML = badges.join("");
     }
 
     function updateRunHeader(){
@@ -919,9 +1281,11 @@
       busy = true;
 
       const st = currentStudent;
+      addSessionStudent(st);
+      sessionData.given[pathKey(st.no)] = (sessionData.given[pathKey(st.no)] || 0) + 1;
+
       const newScore = getScore(st) + 1;
       setLocalScore(st, newScore);
-      renderCurrentStudent();
       scheduleSave();
 
       busy = false;
@@ -934,15 +1298,21 @@
       busy = true;
 
       const st = currentStudent;
+      const sKey = pathKey(st.no);
+
+      addSessionStudent(st);
+      sessionData.absent[sKey] = (sessionData.absent[sKey] || 0) + 1;
+
       const newAbsent = getAbsentCount(st) + 1;
       setLocalAbsent(st, newAbsent);
       scheduleSave();
 
       if (newAbsent < 2) {
         queue.push(st);
-        showToast(`${st.name} atlandı. Gün içinde tekrar gelebilir.`);
+        showAlert("warning", "Gelmedi", st.name);
       } else {
-        showToast(`${st.name} bugün tekrar gösterilmeyecek.`);
+        queue = queue.filter(x => pathKey(x.no) !== sKey);
+        showAlert("danger", "Gelmedi", st.name);
       }
 
       busy = false;
@@ -954,14 +1324,15 @@
 
       busy = true;
       el.finishBtn.disabled = true;
-      el.finishBtn.textContent = "Kaydediliyor...";
+      el.finishBtn.textContent = "Kaydediliyor";
 
       try{
         await flushSave();
-        renderScoresModal();
-        scoresModal.show();
+        sessionSortAsc = true;
+        renderSessionModal();
+        sessionModal.show();
       }catch(err){
-        showToast("Kayıt sırasında hata oluştu.");
+        showAlert("danger", "Hata", "Kayıt alınamadı.");
       }finally{
         el.finishBtn.disabled = false;
         el.finishBtn.textContent = "Bitir";
@@ -969,65 +1340,188 @@
       }
     }
 
-    function renderScoresModal(){
-      const rows = getClassStudents()
+    function createSessionData(){
+      return {
+        order:[],
+        students:{},
+        given:{},
+        absent:{}
+      };
+    }
+
+    function addSessionStudent(st){
+      const sKey = pathKey(st.no);
+
+      if (!sessionData.students[sKey]) {
+        sessionData.students[sKey] = {
+          no:st.no,
+          name:st.name,
+          sinif:st.sinif
+        };
+        sessionData.order.push(sKey);
+      }
+    }
+
+    function getSessionRows(){
+      return sessionData.order.map(sKey => {
+        const st = sessionData.students[sKey];
+        const given = Number(sessionData.given[sKey] || 0);
+        const absent = Number(sessionData.absent[sKey] || 0);
+        const todayAbsent = getAbsentCount(st);
+        const lockedAbsent = todayAbsent >= 2;
+
+        return {
+          key:sKey,
+          no:st.no,
+          name:st.name,
+          given,
+          absent,
+          lockedAbsent,
+          sortScore:given
+        };
+      });
+    }
+
+    function renderSessionModal(){
+      const rows = getSessionRows().sort((a,b) => {
+        const diff = sessionSortAsc ? a.sortScore - b.sortScore : b.sortScore - a.sortScore;
+        if (diff !== 0) return diff;
+        return collator.compare(a.name, b.name);
+      });
+
+      el.sessionSortBtn.textContent = sessionSortAsc ? "Düşük → Yüksek" : "Yüksek → Düşük";
+
+      if (!rows.length) {
+        el.sessionBody.innerHTML = `<tr><td colspan="4" class="text-center text-secondary py-4">Kayıt yok</td></tr>`;
+        return;
+      }
+
+      el.sessionBody.innerHTML = rows.map(r => {
+        const scoreCell = r.lockedAbsent
+          ? `<span class="text-secondary fw-bold">—</span>`
+          : `<span class="badge rounded-pill badge-score">${r.given}</span>`;
+
+        const statusCell = r.lockedAbsent
+          ? `<span class="badge rounded-pill badge-red">Gelmedi</span>`
+          : r.absent > 0
+            ? `<span class="badge rounded-pill badge-orange">Atlandı</span>`
+            : `<span class="text-secondary">—</span>`;
+
+        return `
+          <tr>
+            <td>${escapeHTML(r.no)}</td>
+            <td>${escapeHTML(r.name)}</td>
+            <td class="text-center">${scoreCell}</td>
+            <td class="text-center">${statusCell}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function openScoreList(){
+      settingsModal.hide();
+
+      activeScoreClass = selectedClass || activeScoreClass || classNames[0] || "";
+      scoreSortAsc = true;
+
+      el.scoreClassSelect.innerHTML = classNames.map(cls => {
+        return `<option value="${escapeHTML(cls)}" ${cls === activeScoreClass ? "selected" : ""}>${escapeHTML(cls)}</option>`;
+      }).join("");
+
+      renderScoreList();
+      scoreListModal.show();
+    }
+
+    function renderScoreList(){
+      if (!activeScoreClass) {
+        el.scoreListBody.innerHTML = "";
+        return;
+      }
+
+      const rows = students
+        .filter(s => s.sinif === activeScoreClass)
         .map(s => ({
           no:s.no,
           name:s.name,
-          score:getScore(s),
-          absent:getAbsentCount(s)
-        }))
-        .sort((a,b) => {
-          const diff = a.score - b.score;
-          if (diff !== 0) return diff;
-          return collator.compare(a.name, b.name);
-        });
+          score:getScore(s)
+        }));
 
-      el.scoresModalSub.textContent = `${selectedClass} • düşük puandan yükseğe`;
+      const scores = rows.map(r => r.score);
+      const min = scores.length ? Math.min(...scores) : 0;
+      const max = scores.length ? Math.max(...scores) : 0;
 
-      el.scoresBody.innerHTML = rows.map(r => `
-        <tr>
-          <td>${escapeHTML(r.no)}</td>
-          <td>${escapeHTML(r.name)}</td>
-          <td class="text-center">
-            <span class="badge rounded-pill badge-soft">${r.score}</span>
-          </td>
-          <td class="text-center">
-            <span class="badge rounded-pill ${r.absent >= 2 ? "text-bg-warning" : "text-bg-light border"}">${r.absent}</span>
-          </td>
-        </tr>
-      `).join("");
+      rows.sort((a,b) => {
+        const diff = scoreSortAsc ? a.score - b.score : b.score - a.score;
+        if (diff !== 0) return diff;
+        return collator.compare(a.name, b.name);
+      });
+
+      el.scoreSortBtn.textContent = scoreSortAsc ? "Düşük → Yüksek" : "Yüksek → Düşük";
+
+      const warningCount = rows.filter(r => getLowScoreLabel(r.score, min, max)).length;
+
+      el.scoreWarningStrip.classList.toggle("show", warningCount > 0);
+      el.scoreWarningStrip.textContent = warningCount > 0 ? `Az söz hakkı: ${warningCount}` : "";
+
+      el.scoreListBody.innerHTML = rows.map(r => {
+        const warn = getLowScoreLabel(r.score, min, max);
+        const warnCell = warn
+          ? `<span class="badge rounded-pill ${warn === "Çok az" ? "badge-red" : "badge-orange"}">${warn}</span>`
+          : `<span class="text-secondary">—</span>`;
+
+        return `
+          <tr>
+            <td>${escapeHTML(r.no)}</td>
+            <td>${escapeHTML(r.name)}</td>
+            <td class="text-center"><span class="badge rounded-pill badge-score">${r.score}</span></td>
+            <td class="text-center">${warnCell}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function getLowScoreLabel(score, min, max){
+      if (max <= min) return "";
+      if (score === min) return "Çok az";
+      if ((max - min) >= 3 && score <= min + 1) return "Az";
+      return "";
+    }
+
+    function openConfirm(title, text, action){
+      confirmAction = action;
+      el.confirmTitle.textContent = title;
+      el.confirmText.textContent = text;
+      settingsModal.hide();
+      confirmModal.show();
     }
 
     async function resetScores(){
-      const ok = confirm("Tüm sınıfların puanlamaları sıfırlansın mı?");
-      if (!ok) return;
-
       try{
         await remove(ref(db, `${DB_ROOT}/c`));
         dbData.c = {};
-        showToast("Puanlamalar sıfırlandı.");
-        settingsModal.hide();
-        if (selectedClass) renderCurrentStudent();
+        pendingUpdates = {};
+        renderCurrentStudent();
+        showAlert("success", "Sıfırlandı", "Puanlamalar temizlendi.");
       }catch(err){
-        showToast("Sıfırlama başarısız.");
+        showAlert("danger", "Hata", "Sıfırlanamadı.");
       }
     }
 
     async function deleteDatabasePath(){
-      const ok = confirm("sayacyolu veriyolunun tamamı silinsin mi?");
-      if (!ok) return;
+      if (el.deleteConfirmInput.value.trim() !== "EVET") return;
 
       try{
         await remove(ref(db, DB_ROOT));
         dbData = { c:{}, g:{} };
+        pendingUpdates = {};
         queue = [];
         currentStudent = null;
-        settingsModal.hide();
+        sessionData = createSessionData();
+        deletePathModal.hide();
         showScreen("class");
-        showToast("sayacyolu silindi.");
+        showAlert("success", "Silindi", "sayacyolu temizlendi.");
       }catch(err){
-        showToast("Silme işlemi başarısız.");
+        showAlert("danger", "Hata", "Silinemedi.");
       }
     }
 
@@ -1049,33 +1543,28 @@
       clearTimeout(saveTimer);
       saveTimer = setTimeout(() => {
         flushSave().catch(() => {});
-      }, 300);
+      }, 240);
     }
 
     async function flushSave(){
       clearTimeout(saveTimer);
 
-      const updates = {};
+      const updates = { ...pendingUpdates };
+      updates["m/ls"] = Date.now();
 
-      Object.entries(dbData.c || {}).forEach(([classKey, scoreMap]) => {
-        Object.entries(scoreMap || {}).forEach(([studentKey, val]) => {
-          updates[`c/${classKey}/${studentKey}`] = Number(val) || 0;
-        });
-      });
-
-      Object.entries((((dbData.g || {})[todayKey]) || {})).forEach(([classKey, absentMap]) => {
-        Object.entries(absentMap || {}).forEach(([studentKey, val]) => {
-          updates[`g/${todayKey}/${classKey}/${studentKey}`] = Number(val) || 0;
-        });
-      });
-
-      updates[`m/ls`] = Date.now();
-
-      if (Object.keys(updates).length) {
-        await update(ref(db, DB_ROOT), updates);
+      if (!Object.keys(pendingUpdates).length) {
+        return;
       }
 
-      el.syncText.textContent = "Kayıt güncel";
+      await update(ref(db, DB_ROOT), updates);
+
+      Object.keys(updates).forEach(path => {
+        if (path !== "m/ls" && pendingUpdates[path] === updates[path]) {
+          delete pendingUpdates[path];
+        }
+      });
+
+      el.syncText.textContent = "Güncel";
     }
 
     function getClassStudents(){
@@ -1091,10 +1580,13 @@
     function setLocalScore(st, value){
       const cKey = pathKey(st.sinif);
       const sKey = pathKey(st.no);
+      const score = Number(value) || 0;
 
       dbData.c ||= {};
       dbData.c[cKey] ||= {};
-      dbData.c[cKey][sKey] = Number(value) || 0;
+      dbData.c[cKey][sKey] = score;
+
+      pendingUpdates[`c/${cKey}/${sKey}`] = score;
     }
 
     function getAbsentCount(st){
@@ -1106,11 +1598,14 @@
     function setLocalAbsent(st, value){
       const cKey = pathKey(st.sinif);
       const sKey = pathKey(st.no);
+      const absent = Math.min(2, Number(value) || 0);
 
       dbData.g ||= {};
       dbData.g[todayKey] ||= {};
       dbData.g[todayKey][cKey] ||= {};
-      dbData.g[todayKey][cKey][sKey] = Math.min(2, Number(value) || 0);
+      dbData.g[todayKey][cKey][sKey] = absent;
+
+      pendingUpdates[`g/${todayKey}/${cKey}/${sKey}`] = absent;
     }
 
     async function loadStudentsFromSheet(){
@@ -1118,11 +1613,12 @@
       const table = data?.table;
 
       if (!table || !Array.isArray(table.cols) || !Array.isArray(table.rows)) {
-        throw new Error("Google Sheets verisi okunamadı.");
+        throw new Error("Google Sheets okunamadı.");
       }
 
       const headers = table.cols.map(c => clean(c.label || c.id || ""));
-      const rawRows = table.rows.map(row => {
+
+      const rows = table.rows.map(row => {
         const obj = {};
         row.c.forEach((cell, index) => {
           const header = headers[index] || `COL${index + 1}`;
@@ -1131,7 +1627,7 @@
         return obj;
       });
 
-      return normalizeStudents(rawRows);
+      return normalizeStudents(rows);
     }
 
     function loadGvizJsonp(sheetId, sheetName){
@@ -1141,7 +1637,7 @@
 
         const timer = setTimeout(() => {
           cleanup();
-          reject(new Error("Google Sheets bağlantı zaman aşımına uğradı."));
+          reject(new Error("Google Sheets zaman aşımı."));
         }, 12000);
 
         function cleanup(){
@@ -1154,7 +1650,7 @@
           cleanup();
 
           if (response?.status === "error") {
-            reject(new Error("Google Sheets dosyası okunamadı. Paylaşım ayarı bağlantıya sahip herkes görüntüleyebilir olmalı."));
+            reject(new Error("Google Sheets erişim hatası."));
             return;
           }
 
@@ -1165,7 +1661,7 @@
         script.src = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${encodeURIComponent(sheetName)}&tqx=${tqx}`;
         script.onerror = () => {
           cleanup();
-          reject(new Error("Google Sheets bağlantısı kurulamadı."));
+          reject(new Error("Google Sheets bağlantı hatası."));
         };
 
         document.head.appendChild(script);
@@ -1194,11 +1690,7 @@
         if (normalizeTR(name).includes("adsoyad")) return;
         if (normalizeTR(sinif).includes("sinif")) return;
 
-        list.push({
-          no,
-          name,
-          sinif
-        });
+        list.push({ no, name, sinif });
       });
 
       const unique = new Map();
@@ -1231,15 +1723,13 @@
 
     function clean(value){
       return String(value ?? "")
-        .replace(/\s+/g, " ")
         .replace(/\u00A0/g, " ")
+        .replace(/\s+/g, " ")
         .trim();
     }
 
     function normalizeNo(value){
-      return clean(value)
-        .replace(/\.0$/, "")
-        .trim();
+      return clean(value).replace(/\.0$/, "");
     }
 
     function normalizeName(value){
@@ -1306,8 +1796,18 @@
         .replace(/'/g, "&#039;");
     }
 
-    function showToast(message){
-      el.toastText.textContent = message;
+    function showAlert(type, title, text){
+      const iconMap = {
+        success:"✓",
+        danger:"!",
+        warning:"!",
+        info:"i"
+      };
+
+      el.toastBox.className = `alert-pro ${type}`;
+      el.toastIcon.textContent = iconMap[type] || "i";
+      el.toastTitle.textContent = title;
+      el.toastText.textContent = text;
       toast.show();
     }
   </script>
