@@ -983,7 +983,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getDatabase, ref, get, update, remove } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+    import { getDatabase, ref, get, remove, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
     import { getAnalytics, isSupported } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js";
 
     const firebaseConfig = {
@@ -1000,6 +1000,9 @@
     const SHEET_ID = "1OeDI5rQvWXP6s5OhgRFrh1dThnBMmA9mrCjgYuk1Qtw";
     const SHEET_NAME = "Ogrenciler";
     const DB_ROOT = "sayacyolu";
+    const LOCAL_QUEUE_KEY = "sozHakki_syncQueue_v2";
+    const LOCAL_CLIENT_KEY = "sozHakki_clientId_v2";
+    const LOCAL_SEQ_KEY = "sozHakki_clientSeq_v2";
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
@@ -1009,7 +1012,7 @@
     }).catch(() => {});
 
     const collator = new Intl.Collator("tr", { sensitivity:"base", numeric:true });
-    const todayKey = getTodayKey();
+    const clientId = getOrCreateClientId();
 
     const el = {
       syncText: document.getElementById("syncText"),
@@ -1073,8 +1076,10 @@
 
     let students = [];
     let classNames = [];
-    let dbData = { c:{}, g:{} };
-    let pendingUpdates = {};
+    let dbData = { c:{} };
+
+    let syncQueue = loadSyncQueue();
+    let syncWorkerActive = false;
 
     let selectedClass = "";
     let selectedClassKey = "";
@@ -1084,7 +1089,6 @@
     let currentStudent = null;
     let round = 1;
     let busy = false;
-    let saveTimer = null;
 
     let sessionSortAsc = true;
     let scoreSortAsc = true;
@@ -1175,6 +1179,17 @@
       });
 
       el.deleteConfirmBtn.addEventListener("click", deleteDatabasePath);
+
+      window.addEventListener("online", () => {
+        updateSyncStatus();
+        processSyncQueue();
+      });
+
+      window.addEventListener("offline", updateSyncStatus);
+
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) processSyncQueue();
+      });
     }
 
     async function reloadAll(){
@@ -1190,10 +1205,12 @@
         }
 
         await loadFirebaseData();
+        applyPendingQueueToLocalData();
 
         renderClassButtons();
         setLoading(false);
-        el.syncText.textContent = "Hazır";
+        updateSyncStatus();
+        processSyncQueue();
       }catch(err){
         setLoading(false);
         el.loadError.classList.remove("d-none");
@@ -1267,7 +1284,7 @@
 
     function buildQueue(firstStart = false){
       let list = getClassStudents()
-        .filter(s => getAbsentCount(s) < 2);
+        .filter(s => !sessionData.absent[pathKey(s.no)]);
 
       if (selectedMode === "random") {
         list = shuffle(list);
@@ -1331,20 +1348,13 @@
       if (!currentStudent) return;
 
       const score = getScore(currentStudent);
-      const absent = getAbsentCount(currentStudent);
 
       el.studentNo.textContent = `NO ${currentStudent.no}`;
       el.studentName.textContent = currentStudent.name;
 
-      const badges = [
+      el.studentMeta.innerHTML = [
         `<span class="meta-badge primary">Puan ${score}</span>`
-      ];
-
-      if (absent === 1) {
-        badges.push(`<span class="meta-badge warn">Gelmedi</span>`);
-      }
-
-      el.studentMeta.innerHTML = badges.join("");
+      ].join("");
     }
 
     function updateRunHeader(){
@@ -1366,10 +1376,11 @@
 
       const newScore = getScore(st) + 1;
       setLocalScore(st, newScore);
-      scheduleSave();
+      enqueueScoreIncrement(st);
 
       busy = false;
       showNextStudent();
+      processSyncQueue();
     }
 
     async function markAbsentAndNext(){
@@ -1381,19 +1392,12 @@
       const sKey = pathKey(st.no);
 
       addSessionStudent(st);
-      sessionData.absent[sKey] = (sessionData.absent[sKey] || 0) + 1;
+      sessionData.absent[sKey] = 1;
 
-      const newAbsent = getAbsentCount(st) + 1;
-      setLocalAbsent(st, newAbsent);
-      scheduleSave();
-
-      if (newAbsent < 2) {
-        queue.push(st);
-        showAlert("warning", "Gelmedi", st.name);
-      } else {
-        queue = queue.filter(x => pathKey(x.no) !== sKey);
-        showAlert("danger", "Gelmedi", st.name);
-      }
+      // Gelmedi işareti yalnızca bu ders oturumunda geçerlidir.
+      // Öğrenci mevcut kuyruktan çıkarılır ve sonraki turlarda tekrar eklenmez.
+      queue = queue.filter(x => pathKey(x.no) !== sKey);
+      showAlert("warning", "Gelmedi", `${st.name} bu oturumda tekrar gösterilmeyecek.`);
 
       busy = false;
       showNextStudent();
@@ -1402,21 +1406,16 @@
     async function finishRun(){
       if (busy) return;
 
-      busy = true;
-      el.finishBtn.disabled = true;
-      el.finishBtn.textContent = "Kaydediliyor";
+      // Bitir artık kayıt tetikleyicisi değildir. Her puan tıklaması anında
+      // yerel kuyruğa yazılır ve bağlantı varsa arka planda sırayla gönderilir.
+      processSyncQueue();
 
-      try{
-        await flushSave();
-        sessionSortAsc = true;
-        renderSessionModal();
-        sessionModal.show();
-      }catch(err){
-        showAlert("danger", "Hata", "Kayıt alınamadı.");
-      }finally{
-        el.finishBtn.disabled = false;
-        el.finishBtn.textContent = "Bitir";
-        busy = false;
+      sessionSortAsc = true;
+      renderSessionModal();
+      sessionModal.show();
+
+      if (syncQueue.length && !navigator.onLine) {
+        showAlert("warning", "Çevrimdışı", `${syncQueue.length} kayıt cihazda bekliyor. Bağlantı gelince otomatik gönderilecek.`);
       }
     }
 
@@ -1448,7 +1447,7 @@
         const st = sessionData.students[sKey];
         const given = Number(sessionData.given[sKey] || 0);
         const absent = Number(sessionData.absent[sKey] || 0);
-        const lockedAbsent = absent >= 2;
+        const lockedAbsent = absent >= 1;
 
         return {
           key:sKey,
@@ -1483,9 +1482,7 @@
 
         const statusCell = r.lockedAbsent
           ? `<span class="badge rounded-pill badge-red">Gelmedi</span>`
-          : r.absent > 0
-            ? `<span class="badge rounded-pill badge-orange">Atlandı</span>`
-            : `<span class="text-secondary">—</span>`;
+          : `<span class="text-secondary">—</span>`;
 
         return `
           <tr>
@@ -1575,10 +1572,10 @@
     async function resetScores(){
       try{
         await remove(ref(db, `${DB_ROOT}/c`));
+        clearSyncQueue();
         dbData.c = {};
-        pendingUpdates = {};
         renderCurrentStudent();
-        showAlert("success", "Sıfırlandı", "Puanlamalar temizlendi.");
+        showAlert("success", "Sıfırlandı", "Puanlamalar ve bekleyen yerel kayıtlar temizlendi.");
       }catch(err){
         showAlert("danger", "Hata", "Sıfırlanamadı.");
       }
@@ -1589,14 +1586,14 @@
 
       try{
         await remove(ref(db, DB_ROOT));
-        dbData = { c:{}, g:{} };
-        pendingUpdates = {};
+        clearSyncQueue();
+        dbData = { c:{} };
         queue = [];
         currentStudent = null;
         sessionData = createSessionData();
         deletePathModal.hide();
         showScreen("class");
-        showAlert("success", "Silindi", "sayacyolu temizlendi.");
+        showAlert("success", "Silindi", "sayacyolu ve bekleyen yerel kayıtlar temizlendi.");
       }catch(err){
         showAlert("danger", "Hata", "Silinemedi.");
       }
@@ -1608,40 +1605,11 @@
       if (snap.exists()) {
         const val = snap.val() || {};
         dbData = {
-          c: val.c || {},
-          g: val.g || {}
+          c: val.c || {}
         };
       } else {
-        dbData = { c:{}, g:{} };
+        dbData = { c:{} };
       }
-    }
-
-    function scheduleSave(){
-      clearTimeout(saveTimer);
-      saveTimer = setTimeout(() => {
-        flushSave().catch(() => {});
-      }, 240);
-    }
-
-    async function flushSave(){
-      clearTimeout(saveTimer);
-
-      if (!Object.keys(pendingUpdates).length) {
-        return;
-      }
-
-      const updates = { ...pendingUpdates };
-      updates["m/ls"] = Date.now();
-
-      await update(ref(db, DB_ROOT), updates);
-
-      Object.keys(updates).forEach(path => {
-        if (path !== "m/ls" && pendingUpdates[path] === updates[path]) {
-          delete pendingUpdates[path];
-        }
-      });
-
-      el.syncText.textContent = "Güncel";
     }
 
     function getClassStudents(){
@@ -1655,34 +1623,215 @@
     }
 
     function setLocalScore(st, value){
-      const cKey = pathKey(st.sinif);
-      const sKey = pathKey(st.no);
-      const score = Number(value) || 0;
+      setLocalScoreByKeys(pathKey(st.sinif), pathKey(st.no), value);
+    }
 
+    function setLocalScoreByKeys(cKey, sKey, value){
+      const score = Number(value) || 0;
       dbData.c ||= {};
       dbData.c[cKey] ||= {};
       dbData.c[cKey][sKey] = score;
-
-      pendingUpdates[`c/${cKey}/${sKey}`] = score;
     }
 
-    function getAbsentCount(st){
-      const cKey = pathKey(st.sinif);
-      const sKey = pathKey(st.no);
-      return Number(dbData.g?.[todayKey]?.[cKey]?.[sKey] || 0);
+    function enqueueScoreIncrement(st){
+      const op = {
+        version:2,
+        type:"score+1",
+        clientId,
+        seq:nextClientSequence(),
+        cKey:pathKey(st.sinif),
+        sKey:pathKey(st.no),
+        createdAt:Date.now()
+      };
+
+      syncQueue.push(op);
+      persistSyncQueue();
+      updateSyncStatus();
     }
 
-    function setLocalAbsent(st, value){
-      const cKey = pathKey(st.sinif);
-      const sKey = pathKey(st.no);
-      const absent = Math.min(2, Number(value) || 0);
+    async function processSyncQueue(){
+      if (syncWorkerActive) return;
 
-      dbData.g ||= {};
-      dbData.g[todayKey] ||= {};
-      dbData.g[todayKey][cKey] ||= {};
-      dbData.g[todayKey][cKey][sKey] = absent;
+      if (!syncQueue.length) {
+        updateSyncStatus();
+        return;
+      }
 
-      pendingUpdates[`g/${todayKey}/${cKey}/${sKey}`] = absent;
+      if (!navigator.onLine) {
+        updateSyncStatus();
+        return;
+      }
+
+      syncWorkerActive = true;
+      updateSyncStatus();
+
+      try{
+        while (syncQueue.length && navigator.onLine) {
+          const op = syncQueue[0];
+
+          if (!isValidSyncOperation(op)) {
+            syncQueue.shift();
+            persistSyncQueue();
+            continue;
+          }
+
+          try{
+            const confirmedScore = await syncScoreOperation(op);
+
+            // Yalnızca Firebase işlemi başarıyla tamamlandıktan sonra
+            // kuyruğun başındaki kayıt silinir. Böylece sıra bozulmaz.
+            syncQueue.shift();
+            persistSyncQueue();
+
+            const remainingForStudent = syncQueue.reduce((sum, item) => {
+              return sum + (
+                item.type === "score+1" &&
+                item.cKey === op.cKey &&
+                item.sKey === op.sKey
+                  ? 1
+                  : 0
+              );
+            }, 0);
+
+            setLocalScoreByKeys(op.cKey, op.sKey, confirmedScore + remainingForStudent);
+
+            if (currentStudent &&
+                pathKey(currentStudent.sinif) === op.cKey &&
+                pathKey(currentStudent.no) === op.sKey) {
+              renderCurrentStudent();
+            }
+          }catch(err){
+            // Bağlantı kesildiyse veya Firebase'e ulaşılamadıysa kayıt
+            // yerel kuyrukta kalır. Sonraki online/uygulamaya dönüş olayında
+            // aynı kayıt yeniden denenir.
+            break;
+          }
+        }
+      }finally{
+        syncWorkerActive = false;
+        updateSyncStatus();
+      }
+    }
+
+    async function syncScoreOperation(op){
+      // İşlem sınıf düğümünde transaction ile yapılır. Öğrenci puanı sayısal
+      // kalır; __sync alanı yalnızca aynı yerel işlemin iki kez uygulanmasını
+      // engellemek için son sıra numarasını saklar.
+      const classRef = ref(db, `${DB_ROOT}/c/${op.cKey}`);
+
+      const result = await runTransaction(classRef, current => {
+        const classData = current && typeof current === "object" ? { ...current } : {};
+        const syncMeta = classData.__sync && typeof classData.__sync === "object"
+          ? { ...classData.__sync }
+          : {};
+        const clientMeta = syncMeta[op.clientId] && typeof syncMeta[op.clientId] === "object"
+          ? { ...syncMeta[op.clientId] }
+          : {};
+
+        const lastSeq = Number(clientMeta[op.sKey] || 0);
+
+        if (lastSeq >= Number(op.seq)) {
+          return classData;
+        }
+
+        classData[op.sKey] = Number(classData[op.sKey] || 0) + 1;
+        clientMeta[op.sKey] = Number(op.seq);
+        syncMeta[op.clientId] = clientMeta;
+        classData.__sync = syncMeta;
+
+        return classData;
+      });
+
+      const classData = result.snapshot.val() || {};
+      return Number(classData[op.sKey] || 0);
+    }
+
+    function applyPendingQueueToLocalData(){
+      syncQueue.forEach(op => {
+        if (!isValidSyncOperation(op)) return;
+        const current = Number(dbData.c?.[op.cKey]?.[op.sKey] || 0);
+        setLocalScoreByKeys(op.cKey, op.sKey, current + 1);
+      });
+    }
+
+    function isValidSyncOperation(op){
+      return !!(
+        op &&
+        op.type === "score+1" &&
+        op.clientId &&
+        Number.isFinite(Number(op.seq)) &&
+        op.cKey &&
+        op.sKey
+      );
+    }
+
+    function loadSyncQueue(){
+      try{
+        const raw = localStorage.getItem(LOCAL_QUEUE_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed.filter(isValidSyncOperation) : [];
+      }catch(err){
+        return [];
+      }
+    }
+
+    function persistSyncQueue(){
+      try{
+        localStorage.setItem(LOCAL_QUEUE_KEY, JSON.stringify(syncQueue));
+      }catch(err){
+        // localStorage kullanılamıyorsa mevcut açık oturumdaki RAM kuyruğu korunur.
+      }
+    }
+
+    function clearSyncQueue(){
+      syncQueue = [];
+      try{
+        localStorage.removeItem(LOCAL_QUEUE_KEY);
+      }catch(err){}
+      updateSyncStatus();
+    }
+
+    function getOrCreateClientId(){
+      try{
+        const existing = localStorage.getItem(LOCAL_CLIENT_KEY);
+        if (existing) return existing;
+
+        const id = typeof crypto?.randomUUID === "function"
+          ? crypto.randomUUID().replace(/-/g, "")
+          : `c${Date.now()}${Math.random().toString(36).slice(2)}`;
+
+        localStorage.setItem(LOCAL_CLIENT_KEY, id);
+        return id;
+      }catch(err){
+        return `c${Date.now()}${Math.random().toString(36).slice(2)}`;
+      }
+    }
+
+    function nextClientSequence(){
+      try{
+        const current = Number(localStorage.getItem(LOCAL_SEQ_KEY) || 0);
+        const next = Number.isFinite(current) ? current + 1 : 1;
+        localStorage.setItem(LOCAL_SEQ_KEY, String(next));
+        return next;
+      }catch(err){
+        return Date.now();
+      }
+    }
+
+    function updateSyncStatus(){
+      if (syncWorkerActive) {
+        el.syncText.textContent = "Kaydediliyor";
+        return;
+      }
+
+      if (syncQueue.length) {
+        el.syncText.textContent = navigator.onLine
+          ? `Bekliyor ${syncQueue.length}`
+          : `Çevrimdışı ${syncQueue.length}`;
+        return;
+      }
+
+      el.syncText.textContent = "Güncel";
     }
 
     async function loadStudentsFromSheet(){
@@ -1855,14 +2004,6 @@
       }
 
       return arr;
-    }
-
-    function getTodayKey(){
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth() + 1).padStart(2, "0");
-      const d = String(now.getDate()).padStart(2, "0");
-      return `${y}-${m}-${d}`;
     }
 
     function escapeHTML(value){
